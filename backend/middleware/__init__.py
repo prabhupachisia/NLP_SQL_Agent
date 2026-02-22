@@ -1,0 +1,1 @@
+from middleware.auth_middleware import require_auth
