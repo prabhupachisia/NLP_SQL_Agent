@@ -13,6 +13,7 @@ class QueryHistory(db.Model):
     error = db.Column(db.Text, nullable=True)
     rows_affected = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    was_corrected = db.Column(db.Boolean, default=False)
 
     def to_dict(self):
         return {
@@ -24,5 +25,6 @@ class QueryHistory(db.Model):
             "status": self.status,
             "error": self.error,
             "rows_affected": self.rows_affected,
-            "created_at": self.created_at.isoformat()
+            "created_at": self.created_at.isoformat(),
+            "was_corrected": self.was_corrected
         }

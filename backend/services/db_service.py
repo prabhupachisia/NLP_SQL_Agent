@@ -1,48 +1,86 @@
-import pymysql
+from sqlalchemy import create_engine, text
 from services.encryption_service import decrypt
+import threading
 
-def get_connection(connection_model):
-    host = decrypt(connection_model.host)
-    port = int(decrypt(connection_model.port))
-    username = decrypt(connection_model.username)
-    password = decrypt(connection_model.password)
-    database_name = decrypt(connection_model.database_name)
+_engine_cache = {}
+_lock = threading.Lock()
 
-    conn = pymysql.connect(
-        host=host,
-        port=port,
-        user=username,
-        password=password,
-        database=database_name,
-        cursorclass=pymysql.cursors.DictCursor
-    )
-    return conn
 
-def execute_query(connection_model, sql):
-    conn = None
+def build_connection_url(conn):
+    password = decrypt(conn.password)
+    host = decrypt(conn.host)
+    port = decrypt(conn.port)
+    username = decrypt(conn.username)
+    database = decrypt(conn.database_name)
+
+    if conn.db_type == "mysql":
+        return f"mysql+pymysql://{username}:{password}@{host}:{port}/{database}"
+
+    elif conn.db_type == "postgresql":
+        return f"postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}"
+
+    elif conn.db_type == "sqlite":
+        return f"sqlite:///{database}"
+
+    elif conn.db_type == "mssql":
+        return f"mssql+pyodbc://{username}:{password}@{host}:{port}/{database}?driver=ODBC+Driver+17+for+SQL+Server"
+    elif conn.db_type == "oracle":
+        return f"oracle+oracledb://{username}:{password}@{host}:{port}/?service_name={database}"
+
+    else:
+        raise Exception("Unsupported database type")
+
+
+def get_engine(conn):
+    with _lock:
+        if conn.id not in _engine_cache:
+            url = build_connection_url(conn)
+            _engine_cache[conn.id] = create_engine(
+                url,
+                pool_pre_ping=True,
+                pool_size=5,
+                max_overflow=10
+            )
+        return _engine_cache[conn.id]
+
+
+
+def execute_query(conn, sql):
     try:
-        conn = get_connection(connection_model)
-        with conn.cursor() as cursor:
-            cursor.execute(sql)
-            query_type = sql.strip().upper().split()[0]
-            if query_type == "SELECT":
-                results = cursor.fetchall()
-                return {"results": results, "rows_affected": len(results)}
+        engine = get_engine(conn)
+
+        with engine.connect() as connection:
+            result = connection.execute(text(sql))
+
+            if result.returns_rows:
+                rows = [dict(row._mapping) for row in result]
             else:
-                conn.commit()
-                return {"results": [], "rows_affected": cursor.rowcount}
+                rows = []
 
-    except pymysql.Error as e:
-        return {"error": str(e), "results": None, "rows_affected": 0}
+            return {
+                "success": True,
+                "results": rows,
+                "rows_affected": result.rowcount
+            }
 
-    finally:
-        if conn:
-            conn.close()
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
-def test_connection(connection_model):
+
+def test_connection(conn):
     try:
-        conn = get_connection(connection_model)
-        conn.close()
-        return {"success": True, "message": "Connection successful."}
-    except pymysql.Error as e:
-        return {"success": False, "message": str(e)}
+        engine = get_engine(conn)
+
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+
+        return {
+            "success": True,
+            "message": "Connection successful."
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }

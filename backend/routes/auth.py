@@ -46,7 +46,11 @@ def login():
     token = jwt.encode(
         {
             "user_id": user.id,
-            "exp": datetime.datetime.utcnow() + datetime.timedelta(seconds=current_app.config["JWT_EXPIRY"])
+            "iat": datetime.datetime.utcnow(),
+            "exp": datetime.datetime.utcnow() + datetime.timedelta(
+                seconds=current_app.config["JWT_EXPIRY"]
+            ),
+            "type": "access"
         },
         current_app.config["SECRET_KEY"],
         algorithm="HS256"
