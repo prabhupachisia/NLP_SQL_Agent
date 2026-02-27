@@ -40,8 +40,11 @@ def build_prompt(schema, user_prompt, db_type):
     for table, info in schema.items():
 
         columns_text = "\n".join(
-            [f"  - {col['column']} ({col['type']})"
-             for col in info["columns"]]
+            [
+                f"  - {col['column']} ({col['type']}) "
+                f"{'[AUTO_INCREMENT]' if col.get('is_auto_increment') else ''}"
+                for col in info["columns"]
+            ]
         )
 
         pk_text = ", ".join(info["primary_key"]) if info["primary_key"] else "None"
@@ -76,6 +79,8 @@ Rules:
 - Use foreign key relationships when constructing JOIN queries.
 - Do not invent tables or columns.
 - Do not generate destructive queries.
+- If a primary key column is marked as [AUTO_INCREMENT], DO NOT include it in INSERT statements.
+- If a primary key is NOT auto-generated, you MUST provide a value.
 
 Database Schema:
 {schema_text}
@@ -109,13 +114,6 @@ def generate_sql(schema, user_prompt, db_type):
 
         raw_sql = response.choices[0].message.content
         sql = clean_llm_output(raw_sql)
-
-        # 🚨 Extra safety: block semicolon chaining
-        if ";" in sql[:-1]:
-            return {
-                "success": False,
-                "error": "Multiple SQL statements detected."
-            }
 
         return {"success": True, "sql": sql}
 

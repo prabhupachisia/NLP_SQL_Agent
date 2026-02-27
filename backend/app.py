@@ -2,24 +2,22 @@ from flask import Flask
 from flask_cors import CORS
 from config import Config
 from database import init_db
-# from flask_limiter import Limiter
-# from flask_limiter.util import get_remote_address
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    CORS(app)
+    app.url_map.strict_slashes = False
+
+    CORS(
+        app,
+        resources={r"/api/*": {"origins": "http://localhost:5173"}},
+        supports_credentials=True,
+        allow_headers=["Content-Type", "Authorization", "X-API-Key"],
+        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    )
 
     init_db(app)
-
-    # limiter = Limiter(
-    # key_func=get_remote_address,
-    # default_limits=["200 per day", "50 per hour"]
-    # )
-
-    # limiter.init_app(app)
-    # app.limiter = limiter
 
     from routes import auth_bp, connections_bp, query_bp, schema_bp, apikeys_bp, history_bp, admin_bp
 

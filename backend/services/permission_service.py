@@ -15,14 +15,7 @@ DANGEROUS_KEYWORDS = {"INTO OUTFILE", "LOAD_FILE", "XP_CMDSHELL"}
 def check_permission(sql, permission_level):
     try:
         parsed = sqlparse.parse(sql)
-
-        # 🚨 Block multiple statements
-        if len(parsed) != 1:
-            return {
-                "allowed": False,
-                "reason": "Multiple SQL statements are not allowed."
-            }
-
+        
         statement = parsed[0]
         statement_type = statement.get_type()
 

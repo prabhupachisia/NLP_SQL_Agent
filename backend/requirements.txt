@@ -11,4 +11,3 @@ sqlparse
 oracledb
 faiss-cpu
 sentence-transformers
-flask-limiter

@@ -31,7 +31,6 @@ query_bp = Blueprint("query", __name__)
 
 @query_bp.route("/", methods=["POST"])
 @require_auth
-#@current_app.limiter.limit("10 per minute")
 def run_query(user):
     data = request.get_json()
 

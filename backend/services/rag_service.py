@@ -3,7 +3,13 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 
 # Load embedding model once
-model = SentenceTransformer("all-MiniLM-L6-v2")
+model = None
+
+def get_model():
+    global model
+    if model is None:
+        model = SentenceTransformer("all-MiniLM-L6-v2")
+    return model
 
 # In-memory storage
 schema_index_store = {}
@@ -39,7 +45,7 @@ def build_schema_embeddings(connection_id, schema):
         texts.append(text)
         table_map.append(table)
 
-    embeddings = model.encode(texts)
+    embeddings = get_model().encode(texts)
 
     dimension = embeddings.shape[1]
     index = faiss.IndexFlatL2(dimension)
@@ -63,7 +69,7 @@ def retrieve_relevant_tables(connection_id, user_prompt, top_k=3):
     index = data["index"]
     table_map = data["table_map"]
 
-    query_embedding = model.encode([user_prompt])
+    query_embedding = get_model().encode([user_prompt])
     distances, indices = index.search(np.array(query_embedding), top_k)
 
     relevant_tables = [table_map[i] for i in indices[0]]

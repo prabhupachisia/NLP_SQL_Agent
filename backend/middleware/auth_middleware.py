@@ -11,6 +11,8 @@ from flask import g
 def require_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
+        if request.method == "OPTIONS":
+            return "", 200
         user = None
         api_key = request.headers.get("X-API-Key")
 
