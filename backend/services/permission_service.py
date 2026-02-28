@@ -25,8 +25,6 @@ def check_permission(sql, permission_level):
                 "allowed": False,
                 "reason": "Unrecognized SQL statement."
             }
-
-        # 🚨 Always blocked operations
         if statement_type in ALWAYS_BLOCKED:
             return {
                 "allowed": False,

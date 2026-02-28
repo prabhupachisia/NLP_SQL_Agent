@@ -3,6 +3,7 @@ from database import db
 from models.connection import SavedConnection
 from models.query_history import QueryHistory
 from middleware.auth_middleware import require_auth
+import time
 from flask import current_app
 from services import (
     get_schema,
@@ -112,7 +113,7 @@ def run_query(user):
             status="failed",
             error=permission_result["reason"],
             rows_affected=0,
-            was_corrected=False
+            was_corrected=False,
         )
 
         return jsonify({
@@ -123,7 +124,9 @@ def run_query(user):
     # ----------------------------------
     # STEP 5: Execute Query
     # ----------------------------------
+    start_time = time.time()
     execution_result = execute_query(connection, generated_sql)
+    execution_time = time.time() - start_time
 
     # ----------------------------------
     # STEP 6: Smart Self-Correction
@@ -161,7 +164,8 @@ def run_query(user):
                         status="success",
                         error=None,
                         rows_affected=retry_result["rows_affected"],
-                        was_corrected=True
+                        was_corrected=True,
+                        execution_time=execution_time,
                     )
 
                     return jsonify({
@@ -180,7 +184,8 @@ def run_query(user):
             status="failed",
             error=execution_result["error"],
             rows_affected=0,
-            was_corrected=False
+            was_corrected=False,
+            execution_time=execution_time,
         )
 
         return jsonify({
@@ -201,7 +206,8 @@ def run_query(user):
             status="success",
             error=None,
             rows_affected=execution_result["rows_affected"],
-            was_corrected=False
+            was_corrected=False,
+            execution_time=execution_time,
         )
 
         return jsonify({
@@ -222,7 +228,8 @@ def run_query(user):
         status="failed",
         error=execution_result["error"],
         rows_affected=0,
-        was_corrected=False
+        was_corrected=False,
+        execution_time=execution_time
     )
 
     return jsonify({
@@ -230,7 +237,7 @@ def run_query(user):
         "sql": generated_sql
     }), 400
 
-def save_history(user_id, connection_id, prompt, sql, status, error, rows_affected, was_corrected=False):
+def save_history(user_id, connection_id, prompt, sql, status, error, rows_affected, execution_time=None, was_corrected=False):
     history = QueryHistory(
         user_id=user_id,
         connection_id=connection_id,
@@ -239,7 +246,8 @@ def save_history(user_id, connection_id, prompt, sql, status, error, rows_affect
         status=status,
         error=error,
         rows_affected=rows_affected,
-        was_corrected=was_corrected
+        was_corrected=was_corrected,
+        execution_time=execution_time
     )
     db.session.add(history)
     db.session.commit()

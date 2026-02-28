@@ -40,12 +40,28 @@ def get_engine(conn):
     with _lock:
         if conn.id not in _engine_cache:
             url = build_connection_url(conn)
+
+            engine_kwargs = {
+                "pool_pre_ping": True,
+                "pool_size": 5,
+                "max_overflow": 10,
+            }
+
+            if conn.db_type == "postgresql":
+                engine_kwargs["connect_args"] = {"sslmode": "require"}
+
+            if conn.db_type == "mysql":
+                host = decrypt(conn.host)
+                if "." in host:
+                    engine_kwargs["connect_args"] = {
+                        "ssl": {"ssl_mode": "REQUIRED"}
+                    }
+
             _engine_cache[conn.id] = create_engine(
                 url,
-                pool_pre_ping=True,
-                pool_size=5,
-                max_overflow=10
+                **engine_kwargs
             )
+
         return _engine_cache[conn.id]
 
 
@@ -189,7 +205,6 @@ def execute_query(conn, sql):
         total_rows_affected = 0
         schema_result = schema_service.get_schema(conn)
         schema = schema_result["schema"]
-        print(schema)
         with engine.begin() as connection:
             for stmt in statements:
 

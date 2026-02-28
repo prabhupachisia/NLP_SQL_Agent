@@ -9,11 +9,12 @@ class QueryHistory(db.Model):
     connection_id = db.Column(db.Integer, db.ForeignKey("saved_connections.id"), nullable=False)
     user_prompt = db.Column(db.Text, nullable=False)
     generated_sql = db.Column(db.Text, nullable=False)
-    status = db.Column(db.String(20), nullable=False)  # "success" or "failed"
+    status = db.Column(db.String(20), nullable=False)
     error = db.Column(db.Text, nullable=True)
     rows_affected = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     was_corrected = db.Column(db.Boolean, default=False)
+    execution_time = db.Column(db.Float, nullable=True)
 
     def to_dict(self):
         return {

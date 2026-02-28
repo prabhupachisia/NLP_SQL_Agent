@@ -3,6 +3,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
+import AdminDashboard from "./pages/AdminDashboard";
 import DashboardLayout from "./components/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 import Connections from "./pages/Connections";
@@ -15,6 +16,7 @@ import DatabaseSetup from "./pages/docs/DatabaseSetup";
 import WorkbenchGuide from "./pages/docs/WorkBenchGuide";
 import ApiAuth from "./pages/docs/ApiAuth";
 import HomeRedirect from "./components/HomeRedirect";
+import AdminLayout from "./components/AdminLayout";
 
 function App() {
   return (
@@ -43,6 +45,19 @@ function App() {
         <Route path="database" element={<DatabaseSetup />} />
         <Route path="workbench" element={<WorkbenchGuide />} />
         <Route path="auth" element={<ApiAuth />} />
+      </Route>
+
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute>
+            <AdminRoute>
+              <AdminLayout />
+            </AdminRoute>
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<AdminDashboard />} />
       </Route>
     </Routes>
   );

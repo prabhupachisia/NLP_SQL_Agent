@@ -56,9 +56,6 @@ export default function DatabaseSetup() {
         <div className="grid md:grid-cols-2 gap-6">
           <TypeCard name="MySQL" />
           <TypeCard name="PostgreSQL" />
-          <TypeCard name="Oracle" />
-          <TypeCard name="MSSQL" />
-          <TypeCard name="SQLite" />
         </div>
       </div>
 

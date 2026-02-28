@@ -22,20 +22,13 @@ export default function Login() {
 
     try {
       await login(email, password, rememberMe);
-      navigate("/dashboard");
+      navigate("/");
     } catch {
       setError("Authentication failed. Please verify your credentials.");
     } finally {
       setIsLoading(false);
     }
   };
-
-  const features = [
-    "Schema-aware retrieval (FAISS + RAG)",
-    "Multi-database support (MySQL, PostgreSQL, SQLite, MSSQL)",
-    "Self-correcting SQL retry loop",
-    "Role-based permission enforcement",
-  ];
 
   return (
     <div className="flex min-h-screen w-full font-sans">
@@ -92,8 +85,7 @@ export default function Login() {
                 <div className="flex items-start gap-3">
                   <div className="w-1.5 h-1.5 bg-[#E87400] rounded-full mt-2"></div>
                   <span className="text-neutral-300 text-sm">
-                    Multi-database support (MySQL, Oracle, PostgreSQL, SQLite,
-                    etc.)
+                    Multi-database support (MySQL, PostgreSQL)
                   </span>
                 </div>
 

@@ -210,9 +210,6 @@ export default function Connections() {
                 <option value="">Select DB Type</option>
                 <option value="mysql">MySQL</option>
                 <option value="postgresql">PostgreSQL</option>
-                <option value="oracle">Oracle</option>
-                <option value="mssql">MSSQL</option>
-                <option value="sqlite">SQLite</option>
               </select>
 
               <select

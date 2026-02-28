@@ -86,7 +86,7 @@ export default function Register() {
                 <div className="flex items-start gap-3">
                   <div className="w-1.5 h-1.5 bg-[#E87400] rounded-full mt-2"></div>
                   <span className="text-neutral-300 text-sm">
-                    Support for MySQL, Oracle, PostgreSQL, SQLite etc.
+                    Support for MySQL, PostgreSQL etc.
                   </span>
                 </div>
 
