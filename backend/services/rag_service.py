@@ -1,77 +1,78 @@
-import faiss
-import numpy as np
-from sentence_transformers import SentenceTransformer
+import re
+from collections import defaultdict
 
-# Load embedding model once
-model = None
-
-def get_model():
-    global model
-    if model is None:
-        model = SentenceTransformer("all-MiniLM-L6-v2")
-    return model
-
-# In-memory storage
-schema_index_store = {}
+# In-memory schema storage
+schema_store = {}
 
 
-def build_schema_embeddings(connection_id, schema):
-    texts = []
-    table_map = []
+def normalize_text(text):
+    """
+    Lowercase and remove special characters for consistent matching.
+    """
+    text = text.lower()
+    text = re.sub(r"[^a-z0-9_ ]+", " ", text)
+    return text
+
+
+def build_schema_index(connection_id, schema):
+    """
+    Build lightweight searchable schema index (no embeddings).
+    """
+    table_data = {}
 
     for table, info in schema.items():
+        columns = [col["column"] for col in info["columns"]]
 
-        column_text = ", ".join(
-            [col["column"] for col in info["columns"]]
-        )
+        primary_keys = info.get("primary_key", [])
+        foreign_keys = info.get("foreign_keys", [])
 
-        pk_text = ", ".join(info["primary_key"]) if info["primary_key"] else "None"
-
-        fk_text_parts = []
-        for fk in info["foreign_keys"]:
-            fk_text_parts.append(
-                f"{fk['column']} references {fk['references_table']}.{fk['references_column']}"
+        fk_descriptions = []
+        for fk in foreign_keys:
+            fk_descriptions.append(
+                f"{fk['column']} references {fk['references_table']} {fk['references_column']}"
             )
 
-        fk_text = "; ".join(fk_text_parts) if fk_text_parts else "None"
-
-        text = (
-            f"Table {table}. "
-            f"Primary key: {pk_text}. "
-            f"Foreign keys: {fk_text}. "
-            f"Columns: {column_text}."
+        searchable_text = " ".join(
+            [
+                table,
+                " ".join(columns),
+                " ".join(primary_keys),
+                " ".join(fk_descriptions),
+            ]
         )
 
-        texts.append(text)
-        table_map.append(table)
+        table_data[table] = {
+            "searchable_text": normalize_text(searchable_text),
+            "columns": columns,
+        }
 
-    embeddings = get_model().encode(texts)
-
-    dimension = embeddings.shape[1]
-    index = faiss.IndexFlatL2(dimension)
-    index.add(np.array(embeddings))
-
-    schema_index_store[connection_id] = {
-        "index": index,
-        "table_map": table_map,
-        "texts": texts
-    }
+    schema_store[connection_id] = table_data
 
 
 def retrieve_relevant_tables(connection_id, user_prompt, top_k=3):
     """
-    Retrieve most relevant tables using vector similarity.
+    Retrieve relevant tables using keyword overlap scoring.
     """
-    if connection_id not in schema_index_store:
+    if connection_id not in schema_store:
         return []
 
-    data = schema_index_store[connection_id]
-    index = data["index"]
-    table_map = data["table_map"]
+    schema_data = schema_store[connection_id]
+    prompt = normalize_text(user_prompt)
+    prompt_words = set(prompt.split())
 
-    query_embedding = get_model().encode([user_prompt])
-    distances, indices = index.search(np.array(query_embedding), top_k)
+    scores = defaultdict(int)
 
-    relevant_tables = [table_map[i] for i in indices[0]]
+    for table, data in schema_data.items():
+        table_text = data["searchable_text"]
 
-    return relevant_tables
+        for word in prompt_words:
+            if word in table_text:
+                scores[table] += 1
+
+    # Sort tables by highest score
+    ranked_tables = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+
+    # Return top_k tables with score > 0
+    relevant_tables = [table for table, score in ranked_tables if score > 0]
+
+    return relevant_tables[:top_k]

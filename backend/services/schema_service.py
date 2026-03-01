@@ -1,6 +1,6 @@
 from sqlalchemy import inspect, text
 from services.db_service import get_engine
-from services.rag_service import build_schema_embeddings
+from services.rag_service import build_schema_index
 import time
 
 _schema_cache = {}
@@ -138,7 +138,7 @@ def get_schema(conn):
         # -------------------------
         # Build RAG Embeddings
         # -------------------------
-        build_schema_embeddings(conn.id, schema)
+        build_schema_index(conn.id, schema)
 
         # -------------------------
         # Cache Schema
