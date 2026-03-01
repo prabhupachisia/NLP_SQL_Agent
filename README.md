@@ -161,8 +161,8 @@ Every query is parsed and validated before execution.
 ### 1️⃣ Clone Repository
 
 ```bash
-git clone https://github.com/prabhupachisia/StructQL.git
-cd StructQL
+git clone https://github.com/prabhupachisia/NLP_SQL_Agent.git
+cd NLP_SQL_Agent
 ```
 
 ---
