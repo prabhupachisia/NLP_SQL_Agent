@@ -9,7 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import Connections from "./pages/Connections";
 import Workbench from "./pages/Workbench";
 import History from "./pages/History";
-import APIKeys from "./pages/APIKeys";
+import APIKeys from "./pages/ApiKeys";
 import DocsLayout from "./components/DocsLayout";
 import GettingStarted from "./pages/docs/GettingStarted";
 import DatabaseSetup from "./pages/docs/DatabaseSetup";
